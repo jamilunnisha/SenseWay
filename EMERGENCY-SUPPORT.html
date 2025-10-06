@@ -1,0 +1,971 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>Emergency Support - SenseWay</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR KEY&libraries=places"></script>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #f6f8fa;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #header {
+            background: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 1em 2em;
+            text-align: center;
+        }
+
+        .tiles {
+            display: flex;
+            justify-content: center;
+            padding: 2em;
+            flex-wrap: wrap;
+        }
+
+        .tile {
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 2em;
+        }
+
+        button {
+            background: #f5a623;
+            color: #fff;
+            border: none;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            margin: 10px;
+            position: relative;
+        }
+
+        button:hover {
+            background: #e6951f;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+      #emergency-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #e53935;
+    color: #fff;
+    padding: 15px;
+    border-radius: 50%;
+    font-size: 18px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: echoPulse 1.5s infinite ease-out; /* Apply echo animation continuously */
+}
+
+#emergency-btn:hover {
+    background: #d32f2f;
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* Enhanced shadow on hover */
+}
+
+@keyframes echoPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.7); /* Starting point of echo, matching #e53935 */
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(229, 57, 53, 0); /* Expand and fade */
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); /* Reset */
+    }
+}
+
+        #emergency-options {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            padding: 15px;
+            z-index: 1000;
+            text-align: left;
+            min-width: 200px;
+        }
+
+        #emergency-options button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 14px;
+            background: #f5a623;
+            color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #emergency-options button:hover {
+            background: #e6951f;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        #fetch-location-btn {
+            background: #ffffff;
+            color: #f5a623;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border: 1px solid #f5a623;
+        }
+
+        #fetch-location-btn:hover {
+            background: #f9fafb;
+            color: #e6951f;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        #fetch-location-btn:disabled {
+            color: #cccccc;
+            background: #f5f5f5;
+            cursor: not-allowed;
+            box-shadow: none;
+            border: 1px solid #cccccc;
+        }
+
+        #location-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        #map {
+            max-width: 800px;
+            width: 100%;
+            height: 200px;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #safe-spaces, #calming-toolkit, #guidance-dashboard {
+            margin: 30px auto;
+            padding: 20px;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: left;
+            max-width: 800px;
+        }
+
+        .safe-space-item, .guidance-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f9fafb;
+            border-left: 5px solid #4CAF50;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .safe-space-item:hover, .guidance-item:hover {
+            background: #e6f3e6;
+            transform: translateX(5px);
+        }
+
+        .safe-space-item span, .guidance-item span {
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .safe-space-item p, .guidance-item p {
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            color: #4b5563;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: #1f2937;
+            margin-bottom: 0.5em;
+        }
+
+        .audio-control {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .audio-control button {
+            padding: 8px 16px;
+            font-size: 14px;
+            min-width: 80px;
+            background: #f5a623;
+            color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .audio-control button:hover {
+            background: #e6951f;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        audio {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+       .guidance-details {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9fafb;
+    border-radius: 4px;
+    display: none;
+}
+
+        .guidance-details.active {
+            display: block;
+        }
+
+        .guidance-details h4 {
+            font-size: 16px;
+            color: #1f2937;
+            margin: 5px 0;
+        }
+
+        .guidance-details ul {
+            margin: 0;
+            padding-left: 15px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .guidance-details ul li {
+            margin-bottom: 2px;
+        }
+
+        #contact-selection {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            padding: 20px;
+            z-index: 1000;
+            text-align: left;
+            min-width: 300px;
+            max-width: 90%;
+        }
+
+        #contact-selection h4 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: #1f2937;
+        }
+
+        #contact-selection label {
+            display: block;
+            margin: 5px 0;
+            font-size: 16px;
+            color: #4b5563;
+        }
+
+        #contact-selection button {
+            margin-top: 10px;
+            width: 100%;
+            background: #f5a623;
+            color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #contact-selection button:hover {
+            background: #e6951f;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        #contact-selection .method-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #contact-selection .method-buttons button {
+            width: 48%;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 767px) {
+            .tiles {
+                padding: 15px;
+            }
+
+            button {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+
+            #safe-spaces, #calming-toolkit, #guidance-dashboard {
+                margin: 15px;
+                padding: 12px;
+            }
+
+            .safe-space-item, .guidance-item {
+                padding: 10px;
+            }
+
+            #emergency-btn {
+                bottom: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 16px;
+            }
+
+            #emergency-options {
+                bottom: 80px;
+                right: 15px;
+                min-width: 180px;
+            }
+
+            #contact-selection {
+                min-width: 250px;
+            }
+
+            #map {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <nav class="left">
+            <a href="#menu"><span>Menu</span></a>
+        </nav>
+        <a href="index.html" class="logo">SenseWay</a>
+        <nav class="right">
+            <a href="login.html" class="button alt">Log in</a>
+        </nav>
+    </header>
+
+    <nav id="menu">
+        <ul class="links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="Profile.html">Profile</a></li>
+            <li><a href="Emergency-Support.html">Emergency Support</a></li>
+        </ul>
+        <ul class="actions vertical">
+            <li><a href="login.html" class="button alt">Log in</a></li>
+        </ul>
+    </nav>
+
+    <div class="tiles">
+        <div class="tile">
+            <h3>Location</h3>
+            <div id="map"></div>
+            <button id="fetch-location-btn" onclick="getCurrentLocation()">Fetch My Location</button>
+            <div id="location-info"></div>
+        </div>
+    </div>
+
+    <section id="safe-spaces">
+        <h3>Nearby RestStops</h3>
+        <div id="spaces"></div>
+    </section>
+
+    <section id="calming-toolkit">
+        <h3>Calming Sounds</h3>
+        <div class="audio-control">
+            <button id="audio-toggle" onclick="toggleAllAudio()">Turn Audio On</button>
+        </div>
+        <div class="audio-control">
+            <button id="breathing-toggle" onclick="toggleAudio('breathing')">Toggle Guided Breathing</button>
+        </div>
+        <audio id="breathing-audio" src="audio/guided-breathing.mp3" preload="auto"></audio>
+    </section>
+
+    <section id="guidance-dashboard">
+        <h3>Situation-Based Guidance</h3>
+        <div class="guidance-item" onclick="showGuidance('crowd')">
+            <span>Overwhelmed in a Crowd</span>
+            <p>Steps to stay calm in crowded places.</p>
+            <div id="guidance-crowd" class="guidance-details"></div>
+        </div>
+        <div class="guidance-item" onclick="showGuidance('lost')">
+            <span>Lost</span>
+            <p>Guidance to find your way safely.</p>
+            <div id="guidance-lost" class="guidance-details"></div>
+        </div>
+        <div class="guidance-item" onclick="showGuidance('panic')">
+            <span>Feeling Panicked</span>
+            <p>Tips to manage sudden anxiety.</p>
+            <div id="guidance-panic" class="guidance-details"></div>
+        </div>
+        <div class="guidance-item" onclick="showGuidance('noise')">
+            <span>Overstimulated by Noise</span>
+            <p>Ways to reduce sensory overload.</p>
+            <div id="guidance-noise" class="guidance-details"></div>
+        </div>
+        <div class="guidance-item" onclick="showGuidance('social')">
+            <span>Social Overload</span>
+            <p>Manage discomfort in social settings.</p>
+            <div id="guidance-social" class="guidance-details"></div>
+        </div>
+        <div class="guidance-item" onclick="showGuidance('sensory')">
+            <span>Sensory Overwhelm</span>
+            <p>Cope with overwhelming sensory input.</p>
+            <div id="guidance-sensory" class="guidance-details"></div>
+        </div>
+        <div class="guidance-item" onclick="showGuidance('anxiety')">
+            <span>General Anxiety</span>
+            <p>Strategies to ease anxious feelings.</p>
+            <div id="guidance-anxiety" class="guidance-details"></div>
+        </div>
+    </section>
+
+    <button id="emergency-btn" title="Emergency Support" onclick="toggleEmergencyMenu()">🚨</button>
+    <div id="emergency-options">
+        <button onclick="sendEmergency('overwhelmed')">I'm Overwhelmed</button>
+        <button onclick="sendEmergency('lost')">I'm Lost</button>
+        <button onclick="sendEmergency('help')">I Need Help</button>
+        <button onclick="sendEmergency('medical')">Medical Emergency</button>
+    </div>
+
+    <div id="contact-selection">
+        <h4>Select Contacts to Send SOS</h4>
+        <div id="contact-list"></div>
+        <div class="method-buttons">
+            <button onclick="sendSelected('sms')">Send via SMS</button>
+            <button onclick="sendSelected('whatsapp')">Send via WhatsApp</button>
+        </div>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let audioEnabled = false;
+        let selectedEmergencyType = null;
+        let map = null;
+        let marker = null;
+        const emergencyContacts = [
+            { name: 'Mom', phone: '+1234567890' },
+            { name: 'Dad', phone: '+1234567891' },
+            { name: 'Brother', phone: '+1234567892' },
+            { name: 'Guardian', phone: '+1234567893' }
+        ];
+
+        function initMap(lat = 0, lng = 0) {
+            try {
+                const mapOptions = {
+                    center: { lat, lng },
+                    zoom: 12,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+                map = new google.maps.Map(document.getElementById('map'), mapOptions);
+                marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    title: 'Current Location'
+                });
+                if (lat === 0 && lng === 0) {
+                    marker.setVisible(false);
+                }
+                console.log('Map initialized at:', { lat, lng });
+            } catch (error) {
+                console.error('Map initialization error:', error);
+                document.getElementById('map').innerHTML = '<p style="text-align: center; color: #4b5563;">Failed to load map. Please try again.</p>';
+            }
+        }
+
+        function updateMap(lat, lng) {
+            try {
+                if (!map || !marker) {
+                    initMap(lat, lng);
+                } else {
+                    map.setCenter({ lat, lng });
+                    marker.setPosition({ lat, lng });
+                    marker.setVisible(true);
+                }
+                console.log('Map updated to:', { lat, lng });
+            } catch (error) {
+                console.error('Map update error:', error);
+                document.getElementById('map').innerHTML = '<p style="text-align: center; color: #4b5563;">Failed to update map. Please try again.</p>';
+            }
+        }
+
+        window.onload = () => {
+            initMap();
+        };
+
+        function toggleAllAudio() {
+            const toggleButton = document.getElementById('audio-toggle');
+            const audios = [document.getElementById('breathing-audio')];
+            const toggleButtons = [document.getElementById('breathing-toggle')];
+
+            audioEnabled = !audioEnabled;
+            toggleButton.textContent = audioEnabled ? 'Turn Audio Off' : 'Turn Audio On';
+
+            if (!audioEnabled) {
+                audios.forEach((audio, index) => {
+                    if (!audio.paused) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        const audioName = audio.id === 'breathing-audio' ? 'Guided Breathing' : 'Ocean Waves';
+                        toggleButtons[index].textContent = `Toggle ${audioName}`;
+                    }
+                });
+                currentAudio = null;
+            }
+        }
+
+        function toggleAudio(type) {
+            if (!audioEnabled) {
+                alert('Please turn audio on using the "Turn Audio On" button.');
+                return;
+            }
+
+            const audio = document.getElementById(`${type}-audio`);
+            const toggleButton = document.getElementById(`${type}-toggle`);
+            const audioName = type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ');
+
+            audio.load();
+
+            if (currentAudio && currentAudio !== audio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                document.querySelectorAll('.audio-control button:not(#audio-toggle)').forEach(btn => {
+                    if (btn !== toggleButton) btn.textContent = `Toggle ${btn.textContent.replace('Toggle ', '').replace(' (Playing)', '')}`;
+                });
+            }
+
+            if (audio.paused) {
+                currentAudio = audio;
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error(`Audio playback error for ${type}:`, error);
+                        toggleButton.textContent = `Toggle ${audioName}`;
+                        currentAudio = null;
+                        alert(`Unable to play ${audioName} audio. Please ensure your browser allows audio playback and try again.`);
+                    }).then(() => {
+                        if (!audio.paused) {
+                            toggleButton.textContent = `Toggle ${audioName} (Playing)`;
+                        }
+                    });
+                }
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                currentAudio = null;
+                toggleButton.textContent = `Toggle ${audioName}`;
+            }
+
+            audio.onerror = () => {
+                console.error(`Error loading audio for ${type}`);
+                toggleButton.textContent = `Toggle ${audioName}`;
+                currentAudio = null;
+                alert(`Failed to load ${audioName} audio. Please check the audio file or try a different browser.`);
+            };
+        }
+
+        async function getCurrentLocation() {
+            const fetchButton = document.getElementById('fetch-location-btn');
+            const locationInfo = document.getElementById('location-info');
+            const spacesContainer = document.getElementById('spaces');
+            fetchButton.disabled = true;
+            fetchButton.textContent = 'Fetching...';
+            locationInfo.innerHTML = '<p>Fetching location...</p>';
+            spacesContainer.innerHTML = '<p>Locating nearby hospitals...</p>';
+
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser. Please enable it or try another device.');
+                resetLocationButton(fetchButton, locationInfo, spacesContainer);
+                return;
+            }
+
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+
+                const location = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                console.log('Geolocation success:', location);
+                try {
+                    updateMap(location.lat, location.lng);
+                } catch (mapError) {
+                    console.error('Map update failed, continuing with hospital fetch:', mapError);
+                }
+                await fetchAddressAndSafeSpaces(location, locationInfo, spacesContainer);
+            } catch (error) {
+                let errorMessage = 'Unable to fetch location. Please try again.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    errorMessage = 'Location permission denied. Please enable location access in your browser settings and try again.';
+                } else if (error.code === error.TIMEOUT) {
+                    errorMessage = 'Location request timed out. Please check your connection and try again.';
+                }
+                console.error('Geolocation error:', error);
+                alert(errorMessage);
+                locationInfo.innerHTML = `<p>${errorMessage}</p>`;
+                spacesContainer.innerHTML = '<p>No hospitals found. Please fetch your location.</p>';
+            } finally {
+                resetLocationButton(fetchButton, locationInfo, spacesContainer);
+            }
+        }
+
+        function resetLocationButton(fetchButton, locationInfo, spacesContainer) {
+            fetchButton.disabled = false;
+            fetchButton.textContent = 'Fetch My Location';
+        }
+
+        async function fetchAddressAndSafeSpaces(location, locationInfo, spacesContainer) {
+            try {
+                let address = 'Address not available';
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}`, {
+                        headers: { 'User-Agent': 'SenseWay/1.0' }
+                    });
+                    if (!response.ok) throw new Error(`Address fetch failed: ${response.statusText}`);
+                    const data = await response.json();
+                    address = data.display_name || 'Address not available';
+                    console.log('Address fetched:', address);
+                } catch (err) {
+                    console.error('Address fetch error:', err);
+                }
+
+                locationInfo.innerHTML = `
+                    <p><strong>Address:</strong> ${address}</p>
+                    <p><strong>Latitude:</strong> ${location.lat.toFixed(6)}</p>
+                    <p><strong>Longitude:</strong> ${location.lng.toFixed(6)}</p>
+                `;
+
+                const overpassQuery = `
+                    [out:json][timeout:30];
+                    (
+                        node["amenity"="hospital"](around:10000,${location.lat},${location.lng});
+                        way["amenity"="hospital"](around:10000,${location.lat},${location.lng});
+                        node["amenity"="clinic"](around:10000,${location.lat},${location.lng});
+                        way["amenity"="clinic"](around:10000,${location.lat},${location.lng});
+                    );
+                    out body;
+                `;
+                let safeSpaces = [];
+                try {
+                    console.log('Sending Overpass API request for hospitals/clinics...');
+                    const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+                        method: 'POST',
+                        body: overpassQuery,
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    });
+                    if (!overpassResponse.ok) throw new Error(`Hospital fetch failed: ${overpassResponse.statusText}`);
+                    const overpassData = await overpassResponse.json();
+
+                    console.log('Overpass API response:', overpassData);
+
+                    if (!overpassData.elements || overpassData.elements.length === 0) {
+                        spacesContainer.innerHTML = '<p>No hospitals or clinics found nearby. Try again later or expand the search area.</p>';
+                        console.log('No hospitals/clinics found in response.');
+                        return;
+                    }
+
+                    safeSpaces = overpassData.elements.map(element => {
+                        const type = element.tags.amenity === 'hospital' ? 'Hospital' : 'Clinic';
+                        const name = element.tags.name || `Unnamed ${type} at ${element.lat.toFixed(6)}, ${element.lon.toFixed(6)}`;
+                        const distance = calculateDistance(location.lat, location.lng, element.lat, element.lon);
+                        return {
+                            type,
+                            name,
+                            address: element.tags['addr:street'] || element.tags.address || 'No address available',
+                            distance,
+                            lat: element.lat,
+                            lon: element.lon
+                        };
+                    });
+                    console.log('Parsed safe spaces:', safeSpaces);
+                } catch (err) {
+                    console.error('Hospitals fetch error:', err);
+                    spacesContainer.innerHTML = '<p>Error fetching hospitals or clinics. Please check your connection and try again.</p>';
+                    return;
+                }
+
+                spacesContainer.innerHTML = '';
+                if (safeSpaces.length === 0) {
+                    spacesContainer.innerHTML = '<p>No hospitals or clinics found nearby. Try again later or expand the search area.</p>';
+                    console.log('No safe spaces to display after parsing.');
+                    return;
+                }
+
+                safeSpaces.sort((a, b) => a.distance - b.distance).slice(0, 15).forEach(space => {
+                    const spaceDiv = document.createElement('div');
+                    spaceDiv.className = 'safe-space-item';
+                    spaceDiv.innerHTML = `
+                        <span>${space.type}:</span> ${space.name}
+                        <p>${space.address}<br>Distance: ${space.distance.toFixed(2)} km</p>
+                    `;
+                    spacesContainer.appendChild(spaceDiv);
+                });
+                console.log('Hospitals/clinics displayed:', safeSpaces.length);
+            } catch (error) {
+                console.error('General fetch error:', error);
+                locationInfo.innerHTML = '<p>Error fetching location details. Please try again.</p>';
+                spacesContainer.innerHTML = '<p>Error fetching hospitals or clinics. Please check your connection and try again.</p>';
+            }
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function toggleEmergencyMenu() {
+            const menu = document.getElementById('emergency-options');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            document.getElementById('contact-selection').style.display = 'none';
+        }
+
+        function sendEmergency(type) {
+            selectedEmergencyType = type;
+            const contactSelection = document.getElementById('contact-selection');
+            const contactList = document.getElementById('contact-list');
+            contactList.innerHTML = emergencyContacts.map((contact, index) => `
+                <label>
+                    <input type="checkbox" id="contact-${index}" value="${contact.phone}" data-name="${contact.name}">
+                    ${contact.name} (${contact.phone})
+                </label>
+            `).join('');
+            contactSelection.style.display = 'block';
+            document.getElementById('emergency-options').style.display = 'none';
+        }
+
+        function sendSelected(method) {
+            const message = `🚨 SOS: ${selectedEmergencyType === 'overwhelmed' ? "I'm Overwhelmed" : selectedEmergencyType === 'lost' ? "I'm Lost" : selectedEmergencyType === 'help' ? "I Need Help" : "Medical Emergency"}`;
+            const selectedContacts = Array.from(document.querySelectorAll('#contact-list input:checked')).map(input => ({
+                phone: input.value,
+                name: input.dataset.name
+            }));
+
+            if (selectedContacts.length === 0) {
+                alert('Please select at least one contact.');
+                return;
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const locationMessage = `${message}\nLocation: Lat ${position.coords.latitude.toFixed(6)}, Lon ${position.coords.longitude.toFixed(6)}`;
+                        sendMessage(locationMessage, selectedContacts, method);
+                    },
+                    () => {
+                        sendMessage(`${message}\nLocation unavailable.`, selectedContacts, method);
+                    }
+                );
+            } else {
+                sendMessage(`${message}\nLocation unavailable.`, selectedContacts, method);
+            }
+
+            document.getElementById('contact-selection').style.display = 'none';
+        }
+
+        function sendMessage(message, contacts, method) {
+            const encodedMessage = encodeURIComponent(message);
+            contacts.forEach(contact => {
+                let link;
+                if (method === 'whatsapp') {
+                    link = `https://wa.me/${contact.phone.replace('+', '')}?text=${encodedMessage}`;
+                } else {
+                    link = `sms:${contact.phone}?body=${encodedMessage}`;
+                }
+                const a = document.createElement('a');
+                a.href = link;
+                a.click();
+            });
+            alert(`SOS sent to ${contacts.map(c => c.name).join(', ')} via ${method === 'whatsapp' ? 'WhatsApp' : 'SMS'}: ${message}`);
+        }
+
+        function showGuidance(type) {
+            const guidanceData = {
+                crowd: {
+                    title: 'Overwhelmed in a Crowd',
+                    description: 'Crowds can be intense for neurodiverse individuals. Use these steps to find calm and regain control.',
+                    dos: [
+                        'Take slow, deep breaths to center yourself.',
+                        'Find a quiet corner or exit if possible.',
+                        'Focus on a single object or point to ground yourself.',
+                        'Use noise-canceling earbuds if available.'
+                    ],
+                    donts: [
+                        "Don't push through the crowd; it may increase stress.",
+                        "Don't ignore your discomfort; acknowledge your needs.",
+                        "Don't hesitate to step away briefly."
+                    ]
+                },
+                lost: {
+                    title: 'Lost',
+                    description: 'Feeling lost can be disorienting. Stay calm and follow these steps to navigate back to safety.',
+                    dos: [
+                        'Pause and take 5 deep breaths to center yourself.',
+                        'Look for a familiar landmark or sign.',
+                        'Check nearby hospitals for assistance.',
+                        'Ask a trusted person for directions if needed.'
+                    ],
+                    donts: [
+                        "Don't wander aimlessly; it can increase confusion.",
+                        "Don't panic; take your time to assess.",
+                        "Don't ignore hospital options for help."
+                    ]
+                },
+                panic: {
+                    title: 'Feeling Panicked',
+                    description: 'Sudden panic can feel overwhelming. These steps can help you manage anxiety and feel grounded.',
+                    help: [
+                        'Practice 4-4-4 breathing: inhale for 4 seconds, hold for 4, exhale for 4.',
+                        'Find a quiet place to sit and close your eyes if comfortable.',
+                        'Hold a familiar object for comfort.',
+                        'Try grounding techniques: name objects around you.'
+                    ],
+                    donts: [
+                        "Don't suppress the panic; let it pass naturally.",
+                        "Don't make quick decisions while panicked.",
+                        "Don't stay in a triggering environment."
+                    ]
+                },
+                noise: {
+                    title: 'Overstimulated by Noise',
+                    description: 'Loud noises can be overwhelming for neurodiverse individuals. Here’s how to manage sensory overload.',
+                    dos: [
+                        'Move to a quieter area as soon as possible.',
+                        'Use earplugs or headphones to reduce noise.',
+                        'Focus on slow, rhythmic breathing.',
+                        'Find a calm environment to reset.'
+                    ],
+                    donts: [
+                        "Don't remain in the noisy area longer than needed.",
+                        "Don't ignore early signs of sensory overload.",
+                        "Don't hesitate to use tools like earplugs."
+                    ]
+                },
+                social: {
+                    title: 'Social Overload',
+                    description: 'Social interactions can be draining. These steps help you manage discomfort in social settings.',
+                    dos: [
+                        'Take short breaks to recharge alone.',
+                        'Use a scripted phrase to exit conversations politely.',
+                        'Focus on one person or topic at a time.',
+                        'Set a time limit for social engagements.'
+                    ],
+                    donts: [
+                        "Don't feel pressured to stay in overwhelming conversations.",
+                        "Don't ignore your need for a break.",
+                        "Don't overcommit to social events."
+                    ]
+                },
+                sensory: {
+                    title: 'Sensory Overwhelm',
+                    description: 'Sensory overload from lights, sounds, or textures can be tough. Use these strategies to cope.',
+                    dos: [
+                        'Find a low-stimulus environment (dim lights, quiet).',
+                        'Use sensory tools like fidget toys or weighted items.',
+                        'Breathe deeply and focus on a single sensation.',
+                        'Close your eyes if it feels safe.'
+                    ],
+                    donts: [
+                        "Don't push through overwhelming sensory input.",
+                        "Don't ignore your sensory triggers.",
+                        "Don't hesitate to step away."
+                    ]
+                },
+                anxiety: {
+                    title: 'General Anxiety',
+                    description: 'Anxiety can strike anytime. These steps help you manage and reduce anxious feelings.',
+                    dos: [
+                        'Practice grounding: name 5 things you see, 4 you touch, 3 you hear.',
+                        'Sip water slowly to regulate your body.',
+                        'Write down or verbalize your thoughts to process them.',
+                        'Engage in a familiar routine for comfort.'
+                    ],
+                    donts: [
+                        "Don't dwell on worst-case scenarios.",
+                        "Don't rush; take time to calm down.",
+                        "Don't isolate yourself completely; reach out if needed."
+                    ]
+                }
+            };
+
+            document.querySelectorAll('.guidance-details').forEach(detail => {
+                detail.classList.remove('active');
+                detail.innerHTML = '';
+            });
+
+            const guidance = guidanceData[type];
+            const detailContainer = document.getElementById(`guidance-${type}`);
+            detailContainer.innerHTML = `
+                <h4>${guidance.title}</h4>
+                <p>${guidance.description}</p>
+                <h4>Do's:</h4>
+                <ul>${guidance.dos.map(item => `<li>${item}</li>`).join('')}</ul>
+                <h4>Don'ts:</h4>
+                <ul>${guidance.donts.map(item => `<li>${item}</li>`).join('')}</ul>
+            `;
+            detailContainer.classList.add('active');
+        }
+    </script>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/skel.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
