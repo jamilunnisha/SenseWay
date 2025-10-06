@@ -278,4 +278,4 @@ AR.js & A-Frame: For accessible WebAR navigation.
 Firebase: For hosting and real-time peer monitoring.
 Neurodiverse Community: For inspiring a sensory-friendly navigation solution.
 
-For questions or support, contact [keerthansomasila8@gmail.com] or open an issue on GitHub.
+For questions or support, contact jamilunnishanisha@gmail.com or open an issue on GitHub.
