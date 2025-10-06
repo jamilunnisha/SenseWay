@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SenseWay AR Satellite Navigation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Google Maps API with Places and Geometry Libraries -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=Your key&libraries=places,geometry"></script>
+    <!-- A-Frame and AR.js -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+    <style>
+      body, html {
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        height: 100%;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        left: 400px;
+        height: 100%;
+        width: calc(100% - 400px);
+        z-index: 0;
+      }
+      .dashboard {
+        width: 400px;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #fff;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        z-index: 1000;
+      }
+      .dashboard input, .dashboard button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 14px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      .dashboard button {
+        background: #28a745;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .dashboard button:hover {
+        background: #218838;
+      }
+      #voice-nav-btn.active {
+        background: #dc3545;
+      }
+      #voice-nav-btn.active:hover {
+        background: #c82333;
+      }
+      #verbalCues {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 16px;
+        z-index: 1000;
+      }
+      a-scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .rest-stops-panel {
+        margin-top: 15px;
+        font-size: 14px;
+        background-color: #fafafa;
+        padding: 10px;
+        border-radius: 6px;
+      }
+      .rest-stop-item {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .rest-stop-item:hover {
+        background-color: #f0f8ff;
+      }
+      .rest-stop-item:last-child {
+        border-bottom: none;
+      }
+      .rest-stop-item .stop-icon {
+        display: inline-block;
+        width: 20px;
+        text-align: center;
+        margin-right: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Dashboard -->
+    <div class="dashboard">
+      <input type="text" id="start" placeholder="Choose starting point..." />
+      <input type="text" id="end" placeholder="Choose destination..." />
+      <button onclick="startNavigation()">Start Navigation</button>
+      <button id="voice-nav-btn" onclick="toggleVoice()">🔊 Voice Navigation On</button>
+      <div class="rest-stops-panel" id="rest-stops-panel"></div>
+    </div>
+    <!-- Verbal Cue Display -->
+    <div id="verbalCues"><strong>Instruction:</strong> Enter route details to begin.</div>
+    <!-- Map Container -->
+    <div id="map"></div>
+    <!-- AR Scene -->
+    <a-scene embedded arjs="sourceType: webcam; trackingMethod: best; debugUIEnabled: false;">
+      <a-entity camera gps-camera="maxDistance: 1000;"></a-entity>
+    </a-scene>
+    <script>
+      let map;
+      let directionsService;
+      let directionsRenderer;
+      let placesService;
+      let startAutocomplete, endAutocomplete;
+      let steps = [];
+      let currentStepIndex = 0;
+      let voiceOn = true;
+      let userPosition = null;
+      let watchId = null;
+      let arEntities = [];
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: 17.385044, lng: 78.486671 },
+          zoom: 15,
+          mapTypeId: "satellite",
+          mapTypeControl: true,
+          streetViewControl: true,
+          fullscreenControl: true
+        });
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+          map: map,
+          suppressMarkers: false,
+          polylineOptions: {
+            strokeColor: "#FF0000",
+            strokeWeight: 4
+          }
+        });
+        placesService = new google.maps.places.PlacesService(map);
+        startAutocomplete = new google.maps.places.Autocomplete(document.getElementById("start"));
+        endAutocomplete = new google.maps.places.Autocomplete(document.getElementById("end"));
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              userPosition = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                heading: position.coords.heading || 0
+              };
+              map.setCenter(userPosition);
+            },
+            () => alert("Failed to get your location. Please enable location services.")
+          );
+        }
+      }
+
+      function startNavigation() {
+        const start = document.getElementById("start").value.trim();
+        const end = document.getElementById("end").value.trim();
+        if (!start || !end) {
+          alert("Please enter both start and destination.");
+          return;
+        }
+        clearARScene();
+        document.getElementById("rest-stops-panel").innerHTML = "";
+        directionsService.route(
+          {
+            origin: start,
+            destination: end,
+            travelMode: google.maps.TravelMode.WALKING
+          },
+          (response, status) => {
+            if (status === "OK") {
+              directionsRenderer.setDirections(response);
+              steps = response.routes[0].legs[0].steps;
+              currentStepIndex = 0;
+              findRestStops(response.routes[0]);
+              startLocationTracking();
+              showStep();
+            } else {
+              alert("Directions request failed due to " + status);
+            }
+          }
+        );
+      }
+
+      function startLocationTracking() {
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+        }
+        if (navigator.geolocation) {
+          watchId = navigator.geolocation.watchPosition(
+            (position) => {
+              userPosition = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                heading: position.coords.heading || 0
+              };
+              map.setCenter(userPosition);
+              updateARNavigation();
+            },
+            (error) => {
+              console.error("Geolocation error:", error);
+              alert("Unable to track location. Please enable location services.");
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0
+            }
+          );
+        }
+      }
+
+      function findRestStops(route) {
+        const restStopsPanel = document.getElementById("rest-stops-panel");
+        restStopsPanel.innerHTML = "<strong>Rest Stops Along Route:</strong>";
+        const path = route.overview_path;
+        const midpointIndex = Math.floor(path.length / 2);
+        const midpoint = path[midpointIndex];
+        const request = {
+          location: midpoint,
+          radius: 5000,
+          types: ['park', 'hospital'],
+        };
+        placesService.nearbySearch(request, (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+            const stops = results.slice(0, 5);
+            stops.forEach((place, i) => {
+              const stopDiv = document.createElement("div");
+              stopDiv.className = "rest-stop-item";
+              const icon = place.types.includes('park') ? '🌳' : '🏥';
+              const name = place.name || 'Unnamed';
+              const vicinity = place.vicinity || 'Unknown location';
+              stopDiv.innerHTML = `
+                <span class="stop-icon">${icon}</span>
+                <span>${i + 1}. ${name} (${vicinity})</span>
+              `;
+              stopDiv.addEventListener("click", () => {
+                map.panTo(place.geometry.location);
+                map.setZoom(15);
+                const marker = new google.maps.Marker({
+                  position: place.geometry.location,
+                  map: map,
+                  title: name,
+                  icon: {
+                    url: place.types.includes('park') ? 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                    scaledSize: new google.maps.Size(32, 32),
+                  },
+                });
+                setTimeout(() => {
+                  marker.setMap(null);
+                  const routeBounds = new google.maps.LatLngBounds();
+                  route.overview_path.forEach(point => routeBounds.extend(point));
+                  map.fitBounds(routeBounds);
+                }, 5000);
+              });
+              restStopsPanel.appendChild(stopDiv);
+            });
+          } else {
+            restStopsPanel.innerHTML += "<p>No parks or hospitals found along this route.</p>";
+          }
+        });
+      }
+
+      function showStep() {
+        if (currentStepIndex >= steps.length) {
+          const msg = "You have arrived at your destination!";
+          document.getElementById("verbalCues").innerHTML = `<strong>Instruction:</strong> ${msg}`;
+          speak(msg);
+          clearARScene();
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+          return;
+        }
+        const rawHTML = steps[currentStepIndex].instructions;
+        const instruction = stripHTML(rawHTML);
+        document.getElementById("verbalCues").innerHTML = `<strong>Instruction:</strong> ${instruction}`;
+        speak(instruction);
+ updateARNavigation();
+      }
+
+      function updateARNavigation() {
+        if (currentStepIndex >= steps.length || !userPosition) return;
+        clearARScene();
+        const step = steps[currentStepIndex];
+        const instruction = stripHTML(step.instructions);
+        const destination = step.end_location;
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(
+          new google.maps.LatLng(userPosition.lat, userPosition.lng),
+          destination
+        );
+        if (distance < 10) {
+          currentStepIndex++;
+          showStep();
+          return;
+        }
+        const scene = document.querySelector("a-scene");
+        const textEntity = document.createElement("a-text");
+        textEntity.setAttribute("id", "arText");
+        textEntity.setsetAttribute("value", `${instruction}\n${Math.round(distance)}m`);
+        textEntity.setAttribute("position", "0 1.5 -3");
+        textEntity.setAttribute("color", "white");
+        textEntity.setAttribute("align", "center");
+        textEntity.setAttribute("width", "4");
+        scene.appendChild(textEntity);
+        arEntities.push(textEntity);
+        const heading = google.maps.geometry.spherical.computeHeading(
+          new google.maps.LatLng(userPosition.lat, userPosition.lng),
+          destination
+        );
+        const adjustedHeading = heading - userPosition.heading;
+        const arrowEntity = document.createElement("a-entity");
+        arrowEntity.setAttribute("geometry", "primitive: ring; radiusInner: 0.1_SLICE_0.15");
+        arrowEntity.setAttribute("material", "color: #FF0000; opacity: 0.8");
+        arrowEntity.setAttribute("position", "0 1 -3");
+        arrowEntity.setAttribute("rotation", `0 ${adjustedHeading} 0`);
+        scene.appendChild(arrowEntity);
+        arEntities.push(arrowEntity);
+      }
+
+      function clearARScene() {
+        const scene = document.querySelector("a-scene");
+        arEntities.forEach(entity => scene.removeChild(entity));
+        arEntities = [];
+      }
+
+      function stripHTML(html) {
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+        return tempDiv.textContent || tempDiv.innerText || "";
+      }
+
+      function speak(text) {
+        if (!voiceOn) return;
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
+      }
+
+      function toggleVoice() {
+        voiceOn = !voiceOn;
+        const btn = document.getElementById("voice-nav-btn");
+        btn.innerHTML = `🔊 Voice Navigation ${voiceOn ? 'On' : 'Off'}`;
+        btn.classList.toggle("active", voiceOn);
+      }
+
+      window.onload = initMap;
+    </script>
+  </body>
+</html>
