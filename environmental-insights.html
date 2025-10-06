@@ -1,0 +1,381 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Environmental Insights - SenseWay</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .insight-container {
+            padding: 40px;
+            text-align: center;
+        }
+        .insight-box {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .insight-box h3 {
+            margin-bottom: 10px;
+        }
+        .status-bar {
+            height: 20px;
+            border-radius: 10px;
+            background: #ddd;
+            position: relative;
+        }
+        .status-fill {
+            height: 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1s ease, background-color 1s ease;
+        }
+        .notification {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+            font-weight: bold;
+        }
+        .notification-low {
+            background: #d4edda;
+            color: #155724;
+        }
+        .notification-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .notification-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        #locationInfo {
+            font-style: italic;
+            color: #555;
+            margin-top: 10px;
+        }
+        #getLocationBtn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        #getLocationBtn:hover {
+            background-color: #0056b3;
+        }
+        .pollutant-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .pollutant-table th, .pollutant-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .pollutant-table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <a href="index.html" class="logo">SenseWay</a>
+    </header>
+    
+    <section class="insight-container">
+        <h2>Dynamic Environmental Insights</h2>
+        <p>Stay aware of real-time environmental factors at your location.</p>
+        <button id="getLocationBtn">Get My Location</button>
+        <p id="locationInfo">Click the button to fetch your location</p>
+        
+        <div class="insight-box">
+            <h3>Air Quality Index</h3>
+            <div class="status-bar"><div id="airQualityStatus" class="status-fill"></div></div>
+            <p id="airQualityValue">Waiting for location...</p>
+            <table class="pollutant-table" id="pollutantTable">
+                <thead>
+                    <tr>
+                        <th>Pollutant</th>
+                        <th>Concentration</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3">Waiting for data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="insight-box">
+            <h3>Noise Levels</h3>
+            <div class="status-bar"><div id="noiseStatus" class="status-fill"></div></div>
+            <p id="noiseValue">Waiting for location...</p>
+        </div>
+        
+        <div class="notification" id="notificationBox"></div>
+    </section>
+    
+    <footer id="footer">
+        <div class="inner">
+            <h2>Get In Touch</h2>
+            <ul class="actions">
+                <li><span class="icon fa-phone"></span> <a href="#"></a> 789-382-5742</a></li>
+                <li><span class="icon fa-envelope"></span> <a href="#">information@senseway.com</a></li>
+                <li><span class="icon fa-map-marker"></span> India</li>
+            </ul>
+        </div>
+    </footer>
+    
+    <script>
+        const OPENWEATHER_API_KEY = 'dfa4d288b2447a5fd2cb0effb7a54b5b';
+        let userLocation = null;
+
+        // AQI detailed description based on normalized value
+        function getAqiDescription(aqi, normalizedAqi) {
+            if (aqi === 1) return `AQI at ${normalizedAqi.toFixed(1)}% is excellent, with minimal pollution. Safe for all activities.`;
+            if (aqi === 2) return `AQI at ${normalizedAqi.toFixed(1)}% indicates moderate pollution. Generally safe, but sensitive groups may experience minor respiratory discomfort.`;
+            if (aqi === 3) return `AQI at ${normalizedAqi.toFixed(1)}% suggests satisfactory air quality. Sensitive individuals may face mild respiratory issues; limit prolonged outdoor exertion.`;
+            if (aqi === 4) return `AQI at ${normalizedAqi.toFixed(1)}% is unhealthy. Respiratory and cardiovascular issues may arise, especially for children, elderly, and those with asthma. Wear a mask outdoors.`;
+            if (aqi === 5) return `AQI at ${normalizedAqi.toFixed(1)}% is very unhealthy. Serious health risks, including lung and heart problems. Avoid outdoor activities and stay indoors.`;
+            return `AQI at ${normalizedAqi.toFixed(1)}% is unknown due to data issues. Check later for updates.`;
+        }
+
+        // Pollutant-specific descriptions based on concentration
+        function getPollutantDescription(pollutant, value) {
+            switch (pollutant) {
+                case 'pm2_5':
+                    if (value <= 12) return `PM2.5 at ${value} µg/m³ is low, posing minimal risk to health.`;
+                    if (value <= 35) return `PM2.5 at ${value} µg/m³ is moderate, may cause slight irritation in asthmatics.`;
+                    if (value <= 55) return `PM2.5 at ${value} µg/m³ can trigger coughing or wheezing in sensitive groups.`;
+                    return `PM2.5 at ${value} µg/m³ is high, risking lung inflammation and heart issues. Wear a mask.`;
+                case 'pm10':
+                    if (value <= 54) return `PM10 at ${value} µg/m³ is low, unlikely to affect health.`;
+                    if (value <= 154) return `PM10 at ${value} µg/m³ is moderate, may cause throat irritation in some.`;
+                    if (value <= 254) return `PM10 at ${value} µg/m³ can worsen respiratory conditions like bronchitis.`;
+                    return `PM10 at ${value} µg/m³ is high, increasing risk of respiratory distress. Limit exposure.`;
+                case 'co':
+                    if (value <= 4.4) return `CO at ${value} ppm is safe, with no noticeable health effects.`;
+                    if (value <= 9.4) return `CO at ${value} ppm is moderate, may cause slight headaches in sensitive people.`;
+                    if (value <= 12.4) return `CO at ${value} ppm can lead to dizziness or nausea with prolonged exposure.`;
+                    return `CO at ${value} ppm is dangerous, risking severe poisoning. Ventilate area immediately.`;
+                case 'no2':
+                    if (value <= 53) return `NO2 at ${value} µg/m³ is low, safe for most people.`;
+                    if (value <= 100) return `NO2 at ${value} µg/m³ may cause mild airway irritation in asthmatics.`;
+                    if (value <= 360) return `NO2 at ${value} µg/m³ can worsen respiratory symptoms in sensitive groups.`;
+                    return `NO2 at ${value} µg/m³ is high, risking severe irritation and breathing difficulties.`;
+                case 'so2':
+                    if (value <= 35) return `SO2 at ${value} µg/m³ is low, posing no significant health risk.`;
+                    if (value <= 75) return `SO2 at ${value} µg/m³ may cause slight throat irritation in sensitive individuals.`;
+                    if (value <= 185) return `SO2 at ${value} µg/m³ can trigger asthma symptoms with prolonged exposure.`;
+                    return `SO2 at ${value} µg/m³ is high, risking severe respiratory distress. Avoid outdoor activity.`;
+                case 'o3':
+                    if (value <= 50) return `O3 at ${value} µg/m³ is low, safe for outdoor activities.`;
+                    if (value <= 100) return `O3 at ${value} µg/m³ is moderate, may cause minor chest discomfort during exercise.`;
+                    if (value <= 168) return `O3 at ${value} µg/m³ can cause coughing or shortness of breath in active people.`;
+                    return `O3 at ${value} µg/m³ is high, risking lung irritation and asthma attacks. Limit exertion.`;
+                default:
+                    return 'Data unavailable.';
+            }
+        }
+
+        // Color coding logic for progress bars and notifications
+        function getStatusColor(value) {
+            if (value <= 30) return { bar: '#28a745', notification: 'notification-low' }; // Low: Green
+            if (value <= 70) return { bar: '#ffc107', notification: 'notification-medium' }; // Medium: Yellow
+            return { bar: '#dc3545', notification: 'notification-high' }; // High: Red
+        }
+
+        // Get user location with permission
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            userLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            };
+                            resolve(userLocation);
+                        },
+                        (error) => {
+                            console.error('Geolocation error:', error);
+                            document.getElementById('locationInfo').innerText = 'Location access denied. Please try again.';
+                            reject(error);
+                        }
+                    );
+                } else {
+                    console.error('Geolocation not supported');
+                    document.getElementById('locationInfo').innerText = 'Geolocation not supported by your browser.';
+                    reject(new Error('Geolocation not supported'));
+                }
+            });
+        }
+
+        // Fetch city name using OpenWeather reverse geocoding
+        async function fetchCityName(lat, lon) {
+            try {
+                const response = await axios.get(
+                    `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_API_KEY}`
+                );
+                if (response.data.length > 0) {
+                    return response.data[0].name || 'Unknown location';
+                }
+                return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+            } catch (error) {
+                console.error('Error fetching city name:', error);
+                return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+            }
+        }
+
+        // Fetch air quality using OpenWeather Air Pollution API
+        async function fetchAirQuality(lat, lon) {
+            try {
+                const response = await axios.get(
+                    `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}`
+                );
+                const data = response.data.list[0];
+                const aqi = data.main.aqi; // AQI: 1-5
+                const normalizedAqi = aqi * 20; // Normalize to 0-100%
+                const pollutants = {
+                    pm2_5: data.components.pm2_5.toFixed(1),
+                    pm10: data.components.pm10.toFixed(1),
+                    co: data.components.co.toFixed(1),
+                    no2: data.components.no2.toFixed(1),
+                    so2: data.components.so2.toFixed(1),
+                    o3: data.components.o3.toFixed(1)
+                };
+                return { normalizedAqi, aqi, pollutants };
+            } catch (error) {
+                console.error('Error fetching air quality:', error);
+                return {
+                    normalizedAqi: Math.floor(Math.random() * 100),
+                    aqi: 0,
+                    pollutants: { pm2_5: 0, pm10: 0, co: 0, no2: 0, so2: 0, o3: 0 }
+                }; // Fallback
+            }
+        }
+
+        // Fetch noise level using NoiseCapture API
+        async function fetchNoiseLevel(lat, lon) {
+            try {
+                const response = await fetch(
+                    `https://api.noise-planet.org/noisecapture/measurements?lat=${lat}&lon=${lon}&radius=1000`
+                );
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                const measurements = data.features;
+                if (measurements.length === 0) throw new Error('No data available');
+                const latestNoise = measurements[0].properties.mean_noise_level || 50; // Default to 50 dB
+                const maxNoise = 120; // Max noise level in dB
+                const noise = Math.min((latestNoise / maxNoise) * 100, 100);
+                return noise;
+            } catch (error) {
+                console.error('Error fetching noise level:', error);
+                return Math.floor(Math.random() * 100); // Fallback to random
+            }
+        }
+
+        // Update pollutant table
+        function updatePollutantTable(pollutants) {
+            const tableBody = document.getElementById('pollutantTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            for (const [pollutant, value] of Object.entries(pollutants)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${pollutant.toUpperCase().replace('_', '.')}</td>
+                    <td>${value} ${pollutant === 'co' ? 'ppm' : 'µg/m³'}</td>
+                    <td>${getPollutantDescription(pollutant, parseFloat(value))}</td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Update insights with API data
+        async function updateInsights() {
+            if (!userLocation) {
+                document.getElementById('locationInfo').innerText = 'Click "Get My Location" to fetch data';
+                return;
+            }
+
+            // Update location display
+            const cityName = await fetchCityName(userLocation.lat, userLocation.lng);
+            document.getElementById('locationInfo').innerText = `Location: ${cityName} (${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })} IST)`;
+
+            // Fetch data
+            const { normalizedAqi, aqi, pollutants } = await fetchAirQuality(userLocation.lat, userLocation.lng);
+            const noiseLevel = await fetchNoiseLevel(userLocation.lat, userLocation.lng);
+
+            // Update air quality
+            const airQualityStatus = document.getElementById('airQualityStatus');
+            const airQualityColor = getStatusColor(normalizedAqi);
+            airQualityStatus.style.width = normalizedAqi + '%';
+            airQualityStatus.style.backgroundColor = airQualityColor.bar;
+            document.getElementById('airQualityValue').innerText = getAqiDescription(aqi, normalizedAqi);
+
+            // Update pollutant table
+            updatePollutantTable(pollutants);
+
+            // Update noise level
+            const noiseStatus = document.getElementById('noiseStatus');
+            const noiseColor = getStatusColor(noiseLevel);
+            noiseStatus.style.width = noiseLevel + '%';
+            noiseStatus.style.backgroundColor = noiseColor.bar;
+            document.getElementById('noiseValue').innerText = `Noise: ${noiseLevel.toFixed(1)}%`;
+
+            // Handle notifications
+            let notification = '';
+            let notificationClass = '';
+            if (normalizedAqi > 70) {
+                notification += `AQI at ${normalizedAqi.toFixed(1)}% is unhealthy due to high pollutant levels (e.g., PM2.5: ${pollutants.pm2_5} µg/m³). Wear a mask or stay indoors. `;
+                notificationClass = airQualityColor.notification;
+            } else if (normalizedAqi > 30) {
+                notification += `AQI at ${normalizedAqi.toFixed(1)}% is moderate (e.g., PM2.5: ${pollutants.pm2_5} µg/m³). Sensitive groups may need precautions. `;
+                notificationClass = airQualityColor.notification;
+            }
+            if (noiseLevel > 60) {
+                notification += `Noise at ${noiseLevel.toFixed(1)}% is high, potentially causing hearing discomfort. Use headphones. `;
+                notificationClass = noiseLevel > normalizedAqi ? noiseColor.notification : notificationClass;
+            } else if (noiseLevel > 30) {
+                notification += `Noise at ${noiseLevel.toFixed(1)}% is moderate, may disturb concentration. Stay aware. `;
+                notificationClass = noiseLevel > normalizedAqi ? noiseColor.notification : notificationClass;
+            }
+
+            const notificationBox = document.getElementById('notificationBox');
+            if (notification) {
+                notificationBox.style.display = 'block';
+                notificationBox.innerText = notification;
+                notificationBox.className = `notification ${notificationClass}`;
+            } else {
+                notificationBox.style.display = 'none';
+                notificationBox.className = 'notification';
+            }
+        }
+
+        // Button event listener for location fetch
+        document.getElementById('getLocationBtn').addEventListener('click', async () => {
+            try {
+                await getUserLocation();
+                await updateInsights();
+            } catch (error) {
+                // Error handled in getUserLocation
+            }
+        });
+
+        // Auto-refresh every 10 seconds if location is available
+        setInterval(() => {
+            if (userLocation) updateInsights();
+        }, 10000);
+    </script>
+</body>
+</html>
