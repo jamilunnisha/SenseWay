@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>User Profile - SenseWay</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        /* Polished UI Matching Index Page */
+        body {
+            font-family: Arial, sans-serif;
+            background: url('images/profile.jpg') no-repeat center center/cover;
+            color: #010f0b;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .profile-container {
+            background: rgba(252, 252, 252, 0.819);
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            margin: 20px auto;
+            box-shadow: 0px 6px 12px rgba(1, 67, 29, 0.763);
+            transition: transform 0.3s ease;
+        }
+
+        .profile-container:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            color: #035d42;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #252323;
+            margin-bottom: 20px;
+        }
+
+        label {
+            color: #0eae41;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+
+        input, select {
+            width: 100%;
+            color: #0eae41;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            border-color: #0eae41;
+            box-shadow: 0 0 5px rgba(14, 174, 65, 0.3);
+        }
+
+        .toggle-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+            margin: 10px 0;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Toggle Switch Styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color:  #035d42;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color:  #0eae41 ;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Mobility Preferences */
+        #mobility {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%230eae41" viewBox="0 0 16 16"><path d="M8 8.5l4-4 1.5 1.5L8 11.5 2.5 6 4 4.5 8 8.5z"/></svg>') no-repeat right 10px center;
+            background-size: 12px;
+            padding-right: 30px;
+            padding-top: 8px;
+            line-height: 1.5;
+            height: 40px;
+        }
+
+        /* Health Condition Column */
+        .health-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .health-column input {
+            margin: 0;
+            height: 40px;
+        }
+
+        .health-column label {
+            margin-bottom: 5px;
+        }
+
+        /* Emergency Contacts */
+        .emergency-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .emergency-group input {
+            height: 40px;
+        }
+
+        button {
+            background-color: #035d42;
+            color: white;
+            padding: 12px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+            border-radius: 8px;
+            margin-top: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0eae41;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Profile Section -->
+<div class="profile-container">
+    <h2>User Profile</h2>
+    <p>Customize Your Navigation Experience</p>
+
+    <form id="profileForm">
+        <label>Full Name:</label>
+        <input type="text" id="name" placeholder="Enter your name" required>
+
+        <label>E-mail:</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+
+        <label>Mobility Preferences:</label>
+        <select id="mobility">
+            <option value="walking">Walking</option>
+            <option value="cycling">Cycling</option>
+            <option value="driving">Driving</option>
+        </select>
+
+        <label>Sensory Preferences:</label>
+        <div class="toggle-group">
+            <div class="toggle-item">
+                <label class="switch">
+                    <input type="checkbox" id="loudAreas">
+                    <span class="slider"></span>
+                </label>
+                <span>Avoid Noisy Areas</span>
+            </div>
+            <div class="toggle-item">
+                <label class="switch">
+                    <input type="checkbox" id="crowdedZones">
+                    <span class="slider"></span>
+                </label>
+                <span>Minimize Crowded Zones</span>
+            </div>
+            <div class="toggle-item">
+                <label class="switch">
+                    <input type="checkbox" id="wellLit">
+                    <span class="slider"></span>
+                </label>
+                <span>Prefer Well-Lit Areas</span>
+            </div>
+        </div>
+
+        <label>Triggers:</label>
+        <div class="toggle-group">
+            <div class="toggle-item">
+                <label class="switch">
+                    <input type="checkbox" id="loudNoises">
+                    <span class="slider"></span>
+                </label>
+                <span>Loud Noises</span>
+            </div>
+            <div class="toggle-item">
+                <label class="switch">
+                    <input type="checkbox" id="brightLights">
+                    <span class="slider"></span>
+                </label>
+                <span>Bright Lights</span>
+            </div>
+            <div class="toggle-item">
+                <label class="switch">
+                    <input type="checkbox" id="largeCrowds">
+                    <span class="slider"></span>
+                </label>
+                <span>Large Crowds</span>
+            </div>
+        </div>
+
+        <label>Health Condition:</label>
+        <div class="health-column">
+            <div>
+                <label>Neurodiverse Diagnosis:</label>
+                <input type="text" id="neuroCondition" placeholder="E.g., Autism, ADHD">
+            </div>
+            <div>
+                <label>Specify Details:</label>
+                <input type="text" id="health" placeholder="Condition specifics (optional)">
+            </div>
+            <div>
+                <label>Special Measures:</label>
+                <input type="text" id="specialMeasures" placeholder="E.g., past incidents, notes">
+            </div>
+        </div>
+
+        <label><i class="fas fa-user-shield"></i> Emergency Contacts:</label>
+        <div class="emergency-group">
+            <input type="text" id="emergency" placeholder="Emergency Contact Name">
+            <input type="tel" id="emergencyPhone" placeholder="Emergency Contact Number">
+        </div>
+
+        <button type="submit">Save Preferences</button>
+        <button type="button" onclick="window.location.href='get-started.html'">Sign Up</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const profileForm = document.getElementById("profileForm");
+
+    profileForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const userProfile = {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            mobility: document.getElementById("mobility").value,
+            sensory: {
+                avoidLoudAreas: document.getElementById("loudAreas").checked,
+                minimizeCrowdedZones: document.getElementById("crowdedZones").checked,
+                preferWellLit: document.getElementById("wellLit").checked
+            },
+            triggers: {
+                loudNoises: document.getElementById("loudNoises").checked,
+                brightLights: document.getElementById("brightLights").checked,
+                largeCrowds: document.getElementById("largeCrowds").checked
+            },
+            health: {
+                neuroCondition: document.getElementById("neuroCondition").value,
+                details: document.getElementById("health").value,
+                specialMeasures: document.getElementById("specialMeasures").value
+            },
+            emergency: {
+                contactName: document.getElementById("emergency").value,
+                contactPhone: document.getElementById("emergencyPhone").value
+            }
+        };
+
+        localStorage.setItem("userProfile", JSON.stringify(userProfile));
+        alert("Profile saved successfully!");
+    });
+
+    const savedProfile = JSON.parse(localStorage.getItem("userProfile"));
+    if (savedProfile) {
+        document.getElementById("name").value = savedProfile.name || "";
+        document.getElementById("email").value = savedProfile.email || "";
+        document.getElementById("mobility").value = savedProfile.mobility || "walking";
+        document.getElementById("loudAreas").checked = savedProfile.sensory?.avoidLoudAreas || false;
+        document.getElementById("crowdedZones").checked = savedProfile.sensory?.minimizeCrowdedZones || false;
+        document.getElementById("wellLit").checked = savedProfile.sensory?.preferWellLit || false;
+        document.getElementById("loudNoises").checked = savedProfile.triggers?.loudNoises || false;
+        document.getElementById("brightLights").checked = savedProfile.trthree-quartersiggers?.brightLights || false;
+        document.getElementById("largeCrowds").checked = savedProfile.triggers?.largeCrowds || false;
+        document.getElementById("neuroCondition").value = savedProfile.health?.neuroCondition || "";
+        document.getElementById("health").value = savedProfile.health?.details || "";
+        document.getElementById("specialMeasures").value = savedProfile.health?.specialMeasures || "";
+        document.getElementById("emergency").value = savedProfile.emergency?.contactName || "";
+        document.getElementById("emergencyPhone").value = savedProfile.emergency?.contactPhone || "";
+    }
+});
+</script>
+
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/jquery.scrolly.min.js"></script>
+<script src="assets/js/skel.min.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
