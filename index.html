@@ -1,0 +1,260 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>SenseWay</title>
+  <meta charset="utf-8">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <style>
+  /* Updated Chatbot Styles */
+  #chatbot-toggle {
+     position: fixed;
+     bottom: 40px;
+     right: 30px;
+     background-color: #ffffff;
+     color: #333;
+     border: 2px solid #007bff;
+     border-radius: 70%;
+     width: 100px; /* increased for better spacing */
+     height: 50px;
+     font-size: 16px;
+     font-weight: bold;
+     cursor: pointer;
+     z-index: 1000;
+     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+     transition: all 0.3s ease;
+
+     display: flex; /* center content */
+     align-items: center;
+     justify-content: center;
+     gap: 5px;
+   }
+
+
+  #chatbot-toggle:hover {
+    background-color: #007bff;
+    color: white;
+  }
+
+  #chatbot-container {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 320px;
+    max-height: 420px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+  }
+
+  #chatbot-header {
+    background-color: #ef9b14;
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  #chatbot-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  #chatbot-input {
+    display: flex;
+    border-top: 1px solid #ccc;
+  }
+
+  #chatbot-input input {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    font-size: 14px;
+    outline: none;
+  }
+
+  #chatbot-input button {
+    padding: 8px 12px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+</style>
+
+</head>
+<body>
+
+<!-- Header -->
+<header id="header">
+  <nav class="left"><a href="#menu"><span>Menu</span></a></nav>
+  <a href="index.html" class="logo">SenseWay</a>
+  <nav class="right"><a href="login.html" class="button alt">Log in</a></nav>
+</header>
+
+<!-- Menu -->
+<nav id="menu">
+  <ul class="links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="Profile.html">Profile</a></li>
+    <li><a href="Emergency-Support.html">Emergency Support</a></li>
+  </ul>
+  <ul class="actions vertical">
+    <li><a href="login.html" class="button alt">Log in</a></li>
+  </ul>
+</nav>
+
+<!-- Banner -->
+<section id="banner">
+  <div class="content">
+    <h1>SenseWay – Smart AI Navigation for Neurodiverse People</h1>
+    <p>SenseWay is an AI-powered navigation tailored for neurodiverse users, ensuring seamless, stress-free, and adaptive wayfinding.</p>
+    <ul class="actions">
+      <li><a href="get-started.html" class="button">Get Started</a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- One -->
+<section id="one" class="wrapper">
+  <div class="inner flex flex-3">
+    <div class="flex-item left">
+      <div>
+        <h3>Personalized Calm Routes</h3>
+        <p>Optimized and Tailored to your sensory and accessibility needs</p>
+      </div>
+      <div>
+        <h3>Live Environmental Insights</h3>
+        <p>Real-time updates on crowds, noise, and obstacles.</p>
+      </div>
+    </div>
+    <div class="flex-item image fit round">
+      <img src="images/pic01.jpg" alt="" width="330" height="330">
+    </div>
+    <div class="flex-item right">
+      <div>
+        <h3>AR Navigation</h3>
+        <p>Visual guidance to enhance your wayfinding experience.</p>
+      </div>
+      <div>
+        <h3>Emergency Support</h3>
+        <p>Safe Zones and Quick access to support when needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Two -->
+<section id="two" class="wrapper style1 special">
+  <div class="inner">
+    <h2>Mission</h2>
+    <figure>
+      <blockquote>"Accessibility is not a privilege; it’s a right. The world should be navigable for everyone."</blockquote>
+      <footer><cite class="author"></cite></footer>
+    </figure>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer id="footer">
+  <div class="inner">
+    <h2>Get In Touch</h2>
+    <ul class="actions">
+      <li><span class="icon fa-phone"></span><a href="#">+91 789-3825-742</a></li>
+      <li><span class="icon fa-envelope"></span> <a href="#">information@senseway.com</a></li>
+      <li><span class="icon fa-map-marker"></span> India</li>
+    </ul>
+  </div>
+</footer>
+
+<!-- AI Chatbot Button and Window -->
+<button id="chatbot-toggle" title="Ask Navi!">🙋Hey!!</button>
+
+<div id="chatbot-container">
+  <div id="chatbot-header">Navi Assistant 🧭</div>
+  <div id="chatbot-messages"></div>
+  <div id="chatbot-input">
+    <input type="text" id="chatbot-user-input" placeholder="Ask me anything..." />
+    <button onclick="sendChat()">Send</button>
+  </div>
+</div>
+
+<!-- Chatbot Script -->
+<script>
+const toggleBtn = document.getElementById('chatbot-toggle');
+const chatContainer = document.getElementById('chatbot-container');
+const messages = document.getElementById('chatbot-messages');
+const userInput = document.getElementById('chatbot-user-input');
+
+toggleBtn.addEventListener('click', () => {
+  chatContainer.style.display = chatContainer.style.display === 'flex' ? 'none' : 'flex';
+  chatContainer.style.flexDirection = 'column';
+});
+
+function sendChat() {
+  const input = userInput.value.trim();
+  if (!input) return;
+
+  appendMessage('You', input);
+  userInput.value = '';
+  generateReply(input.toLowerCase());
+}
+
+function appendMessage(sender, text) {
+  const message = document.createElement('div');
+  message.innerHTML = `<strong>${sender}:</strong> ${text}`;
+  messages.appendChild(message);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function generateReply(input) {
+  let reply = "Sorry, I didn’t get that.";
+
+  if (input.includes('hello') || input.includes('hi')) reply = "Hello! I'm Navi 🧭, your route assistant.";
+  else if (input.includes('start') || input.includes('get started')) {
+    reply = "Sure! Taking you to Get Started page...";
+    setTimeout(() => window.location.href = 'get-started.html', 1500);
+  }
+  else if (input.includes('home') || input.includes('index')) {
+    reply = "Taking you to the homepage...";
+    setTimeout(() => window.location.href = 'index.html', 1500);
+  }
+  else if (input.includes('profile')) {
+    reply = "Opening your profile...";
+    setTimeout(() => window.location.href = 'Profile.html', 1500);
+  }
+  else if (input.includes('route') || input.includes('plan')) {
+    reply = "Navigating to route planner...";
+    setTimeout(() => window.location.href = 'route-planning.html', 1500);
+  }
+  else if (input.includes('insight') || input.includes('environment')) {
+    reply = "Redirecting to environmental insights...";
+    setTimeout(() => window.location.href = 'Environmental-insights.html', 1500);
+  }
+  else if (input.includes('emergency')) {
+    reply = "Opening emergency support...";
+    setTimeout(() => window.location.href = 'Emergency-Support.html', 1500);
+  }
+
+  appendMessage('Navi', reply);
+}
+</script>
+
+<!-- Scripts -->
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/jquery.scrolly.min.js"></script>
+<script src="assets/js/skel.min.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
