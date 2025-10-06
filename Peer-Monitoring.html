@@ -1,0 +1,742 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Peer Monitoring - SenseWay</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #f1f5f9;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        #map {
+            height: 300px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        button {
+            background: #f97316;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #ea580c;
+        }
+
+        button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .notifications, .mood-selector, .check-in, .route-planning, .safety-zones, .wellbeing-dashboard, .travel-summary {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .notifications ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notifications li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .notifications li:last-child {
+            border-bottom: none;
+        }
+
+        .mood-selector input, .route-planning input, .safety-zones input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .mood-selector input:focus, .route-planning input:focus, .safety-zones input:focus {
+            border-color: #f97316;
+            outline: none;
+        }
+
+        .mood-selector, .route-planning, .safety-zones {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #1f2937;
+            margin-bottom: 0.5em;
+        }
+
+        h3 {
+            font-size: 1.4em;
+            color: #374151;
+            margin: 0.5em 0;
+        }
+
+        p#status {
+            font-size: 1em;
+            color: #4b5563;
+            margin: 0.5em 0;
+        }
+
+        .wellbeing-dashboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the dashboard */
+            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            max-width: 600px; /* Limit width for better centering */
+            margin: 0 auto; /* Center horizontally */
+        }
+
+        .wellbeing-dashboard .dashboard-item {
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center content */
+            width: 100%; /* Full width of parent */
+        }
+
+        .wellbeing-dashboard canvas {
+            max-height: 250px;
+            width: 100%;
+            margin-top: 15px;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .wellbeing-dashboard p {
+            font-size: 1.2em;
+            color: #374151;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center; /* Center text */
+            width: 100%;
+        }
+
+        .wellbeing-dashboard p i {
+            color: #f97316;
+            font-size: 1.3em;
+        }
+
+        footer {
+            background: #1f2937;
+            color: #ffffff;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        footer .actions {
+            list-style: none;
+            padding: 0;
+            margin: 0.5em 0;
+        }
+
+        footer .actions li {
+            display: inline;
+            margin: 0 10px;
+        }
+
+        footer .actions a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        footer .actions a:hover {
+            color: #f97316;
+        }
+
+        ul#contacts {
+            list-style: none;
+            padding: 0;
+            margin: 0.5em 0;
+        }
+
+        ul#contacts li {
+            margin: 8px 0;
+            font-size: 1em;
+            color: #374151;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            #map {
+                height: 250px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .wellbeing-dashboard {
+                max-width: 100%; /* Full width on mobile */
+            }
+
+            .wellbeing-dashboard canvas {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <nav class="left"><a href="#menu"><span>Menu</span></a></nav>
+        <a href="index.html" class="logo">SenseWay</a>
+        <nav class="right"><a href="#" class="button alt">Log in</a></nav>
+    </header>
+
+    <nav id="menu">
+        <ul class="links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="generic.html">Profile</a></li>
+            <li><a href="elements.html">Emergency Support</a></li>
+            <li><a href="peer-monitoring.html">Peer Monitoring</a></li>
+        </ul>
+        <ul class="actions vertical">
+            <li><a href="#" class="button fit">Login</a></li>
+        </ul>
+    </nav>
+
+    <section class="container">
+        <h2>Peer Monitoring</h2>
+        <p>Share your live location and status with trusted contacts.</p>
+
+        <div id="map"></div>
+
+        <div class="live-sharing">
+            <button id="start-sharing-btn" onclick="startLocationSharing()">Start Sharing</button>
+            <button id="stop-sharing-btn" onclick="stopLocationSharing()" disabled>Stop Sharing</button>
+            <p id="eta">ETA: Not calculated</p>
+            <p id="calm-score">Calm Score: N/A</p>
+        </div>
+
+        <p id="status">Location sharing is off.</p>
+
+        <div class="mood-selector">
+            <h3>How are you feeling?</h3>
+            <input type="text" id="mood-input" placeholder="Enter mood (e.g., Calm, Anxious)">
+            <button onclick="updateMood(document.getElementById('mood-input').value)">Submit</button>
+        </div>
+
+        <div class="check-in">
+            <h3>Need Help?</h3>
+            <button onclick="sendInstantMessage()">Send Message</button>
+            <button onclick="makeCall()">Call Peer</button>
+        </div>
+
+        <div class="route-planning">
+            <h3>Plan Your Route</h3>
+            <input type="text" id="destination" placeholder="Enter destination">
+            <button onclick="planRoute()">Plan Route</button>
+            <p id="peer-notes">Peer Notes: None</p>
+        </div>
+
+        <div class="safety-zones">
+            <h3>Safety Zones</h3>
+            <input type="text" id="safe-zone" placeholder="Add safe zone (e.g., Home)">
+            <button onclick="addSafetyZone()">Add Zone</button>
+        </div>
+
+        <h3>Trusted Contacts</h3>
+        <ul id="contacts">
+            <li>Mum - <button onclick="notifyContact('Mum')">Notify</button> <button onclick="toggleContactPermission('Mum')">Toggle Permissions</button></li>
+            <li>Dad - <button onclick="notifyContact('Dad')">Notify</button> <button onclick="toggleContactPermission('Dad')">Toggle Permissions</button></li>
+        </ul>
+
+        <div class="notifications">
+            <h3>Recent Notifications</h3>
+            <ul id="notifications"></ul>
+        </div>
+
+        <div class="wellbeing-dashboard">
+            <h3>Wellbeing Dashboard</h3>
+            <div class="dashboard-item">
+                <canvas id="moodChart" height="200"></canvas>
+                <p><i class="fas fa-smile"></i> Mood Trend: <span id="mood-trend">N/A</span></p>
+                <p><i class="fas fa-road"></i> Route Safety: <span id="route-safety">N/A</span></p>
+                <p><i class="fas fa-hands-helping"></i> Help Requests: <span id="help-requests">0</span></p>
+                <p><i class="fas fa-home"></i> Calm Areas: <span id="calm-areas">None</span></p>
+                <p><i class="fas fa-heart"></i> Calm Score: <span id="calm-score-display">N/A</span></p>
+            </div>
+        </div>
+
+        <div class="travel-summary">
+            <h3>Travel Summary</h3>
+            <p id="summary">No trips recorded yet.</p>
+        </div>
+    </section>
+
+    <footer id="footer">
+        <div class="inner">
+            <h2>Get In Touch</h2>
+            <ul class="actions">
+                <li><span class="icon fa-phone"></span> <a href="#">+91 789-3825-742</a></li>
+                <li><span class="icon fa-envelope"></span> <a href="#">information@senseway.com</a></li>
+                <li><span class="icon fa-map-marker"></span> India</li>
+            </ul>
+        </div>
+    </footer>
+
+    <script>
+        let map, marker, watchId = null, routePath = null;
+        let notificationCount = 0;
+        const maxNotifications = 5;
+        let moodLog = [], tripLog = [], safetyZones = [], calmScore = 0;
+        let lastPosition = null, lastMood = null, helpRequests = 0;
+        let directionsService, directionsRenderer;
+        let moodChart;
+        let trustedContacts = {
+            'Mum': { permissions: 'full', activeHours: 'always', phone: '+1234567890' },
+            'Dad': { permissions: 'limited', activeHours: 'day', phone: '+1234567891' }
+        };
+
+        window.initMap = function() {
+            try {
+                map = new google.maps.Map(document.getElementById("map"), {
+                    center: { lat: 13.6288, lng: 79.4192 },
+                    zoom: 15,
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                    fullscreenControl: false,
+                    gestureHandling: 'cooperative',
+                    styles: [
+                        { featureType: "all", elementType: "labels", stylers: [{ visibility: "on" }] },
+                        { featureType: "road", elementType: "all", stylers: [{ saturation: -30 }] },
+                    ],
+                });
+                directionsService = new google.maps.DirectionsService();
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: map,
+                    suppressMarkers: true,
+                });
+                initSafetyZones();
+                initMoodChart();
+            } catch (error) {
+                console.error("Failed to initialize Google Maps:", error);
+                document.getElementById("status").innerText = "Failed to load map. Please check your internet connection.";
+            }
+        };
+
+        function initMoodChart() {
+            const ctx = document.getElementById("moodChart").getContext("2d");
+            moodChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Mood Trend',
+                        data: [],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            ticks: { callback: value => ['Calm', 'Anxious', 'Sad', 'Overwhelmed'][value] || '' },
+                            min: 0,
+                            max: 3
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `Mood: ${['Calm', 'Anxious', 'Sad', 'Overwhelmed'][context.parsed.y]}`
+                            }
+                        }
+                    },
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        async function startLocationSharing() {
+            if (!navigator.geolocation) {
+                document.getElementById("status").innerText = "Geolocation is not supported by your browser.";
+                return;
+            }
+
+            const startBtn = document.getElementById("start-sharing-btn");
+            const stopBtn = document.getElementById("stop-sharing-btn");
+            startBtn.disabled = true;
+            startBtn.textContent = "Fetching Location...";
+            document.getElementById("status").innerText = "Requesting location access...";
+
+            watchId = navigator.geolocation.watchPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    lastPosition = { lat, lng };
+
+                    if (!marker) {
+                        marker = new google.maps.Marker({
+                            position: { lat, lng },
+                            map: map,
+                            title: "Your Location",
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 10,
+                                fillColor: "#f97316",
+                                fillOpacity: 0.9,
+                                strokeWeight: 2,
+                                strokeColor: "#ffffff",
+                            },
+                            animation: google.maps.Animation.DROP,
+                        });
+                    } else {
+                        marker.setPosition({ lat, lng });
+                    }
+
+                    map.panTo({ lat, lng });
+                    map.setZoom(16);
+                    document.getElementById("status").innerText = `Location shared: Lat ${lat.toFixed(4)}, Lon ${lng.toFixed(4)}`;
+                    startBtn.textContent = "Start Sharing";
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    updateCalmScore(position);
+                    checkSafetyZones({ lat, lng });
+                    await checkSmartAlerts(position);
+                    startCheckInPrompts();
+                    await shareLocationWithPeers({ lat, lng });
+                },
+                (error) => {
+                    startBtn.disabled = false;
+                    startBtn.textContent = "Start Sharing";
+                    stopBtn.disabled = true;
+                    let message = "Error sharing location: ";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        message += "Permission denied. Please enable location access.";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        message += "Location unavailable. Ensure GPS is enabled.";
+                    } else if (error.code === error.TIMEOUT) {
+                        message += "Request timed out. Please try again.";
+                    } else {
+                        message += error.message;
+                    }
+                    document.getElementById("status").innerText = message;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0,
+                }
+            );
+        }
+
+        async function stopLocationSharing() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                document.getElementById("status").innerText = "Location sharing is off.";
+                document.getElementById("start-sharing-btn").disabled = false;
+                document.getElementById("stop-sharing-btn").disabled = true;
+                await generateTravelSummary();
+            }
+        }
+
+        async function notifyContact(name, message) {
+            const notificationList = document.getElementById("notifications");
+            const notificationText = `Alert sent to ${name} at ${new Date().toLocaleTimeString()}: ${message}` + 
+                (lastPosition ? ` (Location: Lat ${lastPosition.lat.toFixed(4)}, Lon ${lastPosition.lng.toFixed(4)})` : '');
+            const li = document.createElement("li");
+            li.textContent = notificationText;
+
+            if (notificationCount >= maxNotifications) {
+                notificationList.removeChild(notificationList.lastChild);
+            } else {
+                notificationCount++;
+            }
+
+            notificationList.insertBefore(li, notificationList.firstChild);
+
+            try {
+                await fetch('http://localhost:3000/api/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact: name, message, location: lastPosition })
+                });
+            } catch (error) {
+                console.error('Failed to send notification:', error);
+            }
+        }
+
+        function updateMood(mood) {
+            lastMood = mood;
+            const moodMap = { 'Calm': 0, 'Anxious': 1, 'Sad': 2, 'Overwhelmed': 3 };
+            const moodIndex = moodMap[mood] !== undefined ? moodMap[mood] : 0;
+            moodLog.push({ mood, time: new Date().toLocaleTimeString(), value: moodIndex });
+            moodChart.data.labels.push(new Date().toLocaleTimeString());
+            moodChart.data.datasets[0].data.push(moodIndex);
+            moodChart.update();
+            document.getElementById("mood-trend").innerText = moodLog.map(m => m.mood).join(', ');
+            if (['Anxious', 'Sad', 'Overwhelmed'].includes(mood)) {
+                notifyContact('All', `User reported feeling ${mood}`);
+                updateWellbeingDashboard();
+            }
+            document.getElementById('mood-input').value = '';
+        }
+
+        async function sendInstantMessage() {
+            const message = prompt("Enter message to send to peer:", "I need assistance");
+            if (message) {
+                await notifyContact('All', `Message: "${message}" ${lastPosition ? `(Location: Lat ${lastPosition.lat.toFixed(4)}, Lon ${lastPosition.lng.toFixed(4)})` : ''}`);
+                try {
+                    await fetch('http://localhost:3000/api/message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message, location: lastPosition })
+                    });
+                } catch (error) {
+                    console.error('Failed to send message:', error);
+                }
+            }
+        }
+
+        async function makeCall() {
+            const contactName = prompt("Enter contact name to call (e.g., Mum, Dad):");
+            if (contactName && trustedContacts[contactName]) {
+                await notifyContact(contactName, `Initiated call to ${contactName}`);
+                try {
+                    const response = await fetch('http://localhost:3000/api/call', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contact: contactName, phone: trustedContacts[contactName].phone })
+                    });
+                    const result = await response.json();
+                    alert(result.status);
+                } catch (error) {
+                    console.error('Failed to initiate call:', error);
+                    alert('Failed to initiate call. Please try again.');
+                }
+            } else {
+                alert("Invalid contact name.");
+            }
+        }
+
+        async function planRoute() {
+            const destination = document.getElementById("destination").value;
+            if (!destination || !lastPosition) return;
+
+            directionsService.route({
+                origin: lastPosition,
+                destination: destination,
+                travelMode: google.maps.TravelMode.WALKING,
+            }, (result, status) => {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    directionsRenderer.setDirections(result);
+                    routePath = result.routes[0].overview_path;
+                    calculateETA(result);
+                    checkPeerNotes(destination);
+                } else {
+                    document.getElementById("status").innerText = "Failed to plan route.";
+                }
+            });
+        }
+
+        function calculateETA(result) {
+            const duration = result.routes[0].legs[0].duration.text;
+            document.getElementById("eta").innerText = `ETA: ${duration}`;
+        }
+
+        function updateCalmScore(position) {
+            calmScore = Math.random() * 100;
+            document.getElementById("calm-score").innerText = `Calm Score: ${calmScore.toFixed(1)}`;
+            document.getElementById("calm-score-display").innerText = `${calmScore.toFixed(1)}`;
+            updateWellbeingDashboard();
+        }
+
+        async function checkSmartAlerts(position) {
+            if (routePath) {
+                const deviation = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+                    routePath[0]
+                );
+                if (deviation > 100) {
+                    await notifyContact('All', `User deviated from planned route by ${deviation.toFixed(0)} meters`);
+                }
+            }
+            if (lastPosition && Math.abs(position.coords.latitude - lastPosition.lat) < 0.0001 &&
+                Math.abs(position.coords.longitude - lastPosition.lng) < 0.0001) {
+                await notifyContact('All', 'User has not moved for a prolonged period');
+            }
+        }
+
+        function initSafetyZones() {
+            safetyZones = [
+                { name: "Home", center: { lat: 13.6288, lng: 79.4192 }, radius: 100 },
+            ];
+            safetyZones.forEach(zone => {
+                new google.maps.Circle({
+                    map: map,
+                    center: zone.center,
+                    radius: zone.radius,
+                    fillColor: "#22c55e",
+                    fillOpacity: 0.2,
+                    strokeColor: "#22c55e",
+                    strokeOpacity: 0.5,
+                });
+            });
+        }
+
+        async function addSafetyZone() {
+            const zoneName = document.getElementById("safe-zone").value;
+            if (zoneName && lastPosition) {
+                safetyZones.push({ name: zoneName, center: lastPosition, radius: 100 });
+                new google.maps.Circle({
+                    map: map,
+                    center: lastPosition,
+                    radius: 100,
+                    fillColor: "#22c55e",
+                    fillOpacity: 0.2,
+                    strokeColor: "#22c55e",
+                    strokeOpacity: 0.5,
+                });
+                await notifyContact('All', `Added safety zone: ${zoneName}`);
+            }
+        }
+
+        async function checkSafetyZones(position) {
+            safetyZones.forEach(async zone => {
+                const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(position.lat, position.lng),
+                    new google.maps.LatLng(zone.center.lat, zone.center.lng)
+                );
+                if (distance < zone.radius) {
+                    await notifyContact('All', `User entered safety zone: ${zone.name}`);
+                    document.getElementById("calm-areas").innerText = zone.name;
+                } else if (distance > zone.radius && distance < zone.radius + 50) {
+                    await notifyContact('All', `User left safety zone: ${zone.name}`);
+                }
+            });
+        }
+
+        function checkPeerNotes(destination) {
+            const notes = {
+                "park": "Avoid after 5 PM",
+                "cafe": "Quiet café nearby",
+            };
+            document.getElementById("peer-notes").innerText = `Peer Notes: ${notes[destination.toLowerCase()] || 'None'}`;
+        }
+
+        function startCheckInPrompts() {
+            setTimeout(async () => {
+                if (watchId !== null) {
+                    if (confirm("Check-in: How are you feeling?")) {
+                        updateMood(prompt("Enter mood (e.g., Calm, Anxious, Sad, Overwhelmed):"));
+                    } else {
+                        await notifyContact('All', 'User did not respond to check-in prompt');
+                    }
+                }
+            }, 300000);
+        }
+
+        async function toggleContactPermission(name) {
+            const contact = trustedContacts[name];
+            contact.permissions = contact.permissions === 'full' ? 'limited' : 'full';
+            await notifyContact(name, `Permissions updated to ${contact.permissions}`);
+        }
+
+        async function shareLocationWithPeers({ location }) {
+            try {
+                await fetch('http://localhost:3000/api/share-location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location, contacts: trustedContacts })
+                });
+            } catch (error) {
+                console.error('Failed to share location:', error);
+            }
+        }
+
+        function updateWellbeingDashboard() {
+            document.getElementById("mood-trend").innerText = moodLog.map(m => m.mood).join(', ') || 'N/A';
+            document.getElementById("route-safety").innerText = routePath ? 'Active' : 'N/A';
+            document.getElementById("help-requests").innerText = helpRequests;
+            document.getElementById("calm-areas").innerText = safetyZones.map(z => z.name).join(', ') || 'None';
+        }
+
+        async function generateTravelSummary() {
+            const summary = `Trip Summary:
+Route: ${routePath ? 'Planned route followed' : 'No route planned'}
+Mood Log: ${moodLog.map(m => `${m.mood} at ${m.time}`).join(', ') || 'None'}
+Alerts: ${notificationCount}
+Help Requests: ${helpRequests}
+Calm Areas: ${safetyZones.map(z => z.name).join(', ') || 'None'}`;
+            document.getElementById("summary").innerText = summary;
+            await notifyContact('All', 'Travel summary generated');
+        }
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=Your key &libraries=geometry,directions&callback=initMap"
+        onerror="document.getElementById('status').innerText = 'Failed to load Google Maps API. Please check your internet connection.';">
+    </script>
+</body>
+</html>
